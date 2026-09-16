@@ -1,0 +1,41 @@
+plugins {
+    id 'java-library'
+    id 'net.neoforged.moddev' version '2.0.78'
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+neoForge {
+    version = project.neo_version
+}
+
+dependencies {
+    // Only used to compile against Elytra Slot's real classes (IElytraPlatform,
+    // NeoForgeElytraPlatform). Never bundled - the original jar is what gets patched.
+    compileOnly files("libs/${original_jar_name}")
+}
+
+// Takes the original Elytra Slot jar, swaps in our replacement service-provider file, and
+// adds our one new compiled class - everything else in the jar is untouched byte-for-byte.
+tasks.register('patchedJar', Zip) {
+    dependsOn tasks.named('compileJava')
+    archiveFileName = project.patched_jar_name
+    destinationDirectory = layout.buildDirectory.dir('libs')
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    from(zipTree(file("libs/${original_jar_name}"))) {
+        exclude 'META-INF/services/com.illusivesoulworks.elytraslot.platform.services.IElytraPlatform'
+    }
+    from(sourceSets.main.output.classesDirs)
+    from('patch-resources') {
+        into 'META-INF/services'
+    }
+}
+
+tasks.named('build') {
+    dependsOn tasks.named('patchedJar')
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
