@@ -49,8 +49,13 @@ public final class ElytraToggleAwareElytraPlatform implements IElytraPlatform {
 
     @Override
     public boolean canFly(ItemStack stack, LivingEntity livingEntity) {
-        // Purely a property of the stack itself (durability etc.) - not affected by the
-        // toggle, so this is left completely untouched.
+        // Originally left untouched on the assumption this was purely a stack-durability
+        // check, unrelated to the toggle. Gating it here too in case it's actually the method
+        // Elytra Slot's flight-start logic consults (rather than getEquipped/isEquipped) -
+        // this can only add blocking, never remove behavior that currently works correctly.
+        if (isFlightDisabledByToggle(livingEntity)) {
+            return false;
+        }
         return delegate.canFly(stack, livingEntity);
     }
 
