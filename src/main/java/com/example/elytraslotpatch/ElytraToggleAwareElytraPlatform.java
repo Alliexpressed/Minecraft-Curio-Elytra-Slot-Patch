@@ -2,6 +2,7 @@ package com.example.elytraslotpatch;
 
 import com.illusivesoulworks.elytraslot.platform.NeoForgeElytraPlatform;
 import com.illusivesoulworks.elytraslot.platform.services.IElytraPlatform;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
@@ -70,13 +71,13 @@ public final class ElytraToggleAwareElytraPlatform implements IElytraPlatform {
             return false;
         }
 
-        AttachmentType<?> attachmentType = NeoForgeRegistries.ATTACHMENT_TYPES.getValue(ATTACHMENT_ID);
-        if (attachmentType == null) {
+        Optional<AttachmentType<?>> attachmentType = NeoForgeRegistries.ATTACHMENT_TYPES.getOptional(ATTACHMENT_ID);
+        if (attachmentType.isEmpty()) {
             // Elytra Toggle isn't installed - behave exactly like the original.
             return false;
         }
 
-        boolean enabled = player.getData((AttachmentType<Boolean>) attachmentType);
+        boolean enabled = player.getData((AttachmentType<Boolean>) attachmentType.get());
         return !enabled;
     }
 }
