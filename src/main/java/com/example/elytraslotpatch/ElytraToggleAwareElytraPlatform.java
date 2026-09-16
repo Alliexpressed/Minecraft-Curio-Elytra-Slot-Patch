@@ -29,9 +29,6 @@ import net.neoforged.neoforge.registries.NeoForgeRegistries;
  */
 public final class ElytraToggleAwareElytraPlatform implements IElytraPlatform {
 
-    private static final ResourceLocation ATTACHMENT_ID =
-            ResourceLocation.fromNamespaceAndPath("elytratoggle", "elytra_flight_enabled");
-
     private final NeoForgeElytraPlatform delegate = new NeoForgeElytraPlatform();
 
     @Override
@@ -71,7 +68,15 @@ public final class ElytraToggleAwareElytraPlatform implements IElytraPlatform {
             return false;
         }
 
-        Optional<AttachmentType<?>> attachmentType = NeoForgeRegistries.ATTACHMENT_TYPES.getOptional(ATTACHMENT_ID);
+        // Built here rather than as a static field so that constructing this ResourceLocation
+        // - and therefore loading the ResourceLocation class itself - doesn't happen until
+        // gameplay actually calls this method, long after mod bootstrap. Building it eagerly
+        // at class-load time (this class is instantiated very early, during Elytra Slot's own
+        // ServiceLoader setup) was forcing ResourceLocation to load earlier than it otherwise
+        // would, which could race against other mods' mixins targeting that same class.
+        ResourceLocation attachmentId =
+                ResourceLocation.fromNamespaceAndPath("elytratoggle", "elytra_flight_enabled");
+        Optional<AttachmentType<?>> attachmentType = NeoForgeRegistries.ATTACHMENT_TYPES.getOptional(attachmentId);
         if (attachmentType.isEmpty()) {
             // Elytra Toggle isn't installed - behave exactly like the original.
             return false;
